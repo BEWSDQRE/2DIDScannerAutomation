@@ -5,6 +5,7 @@ using System.Data;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -23,14 +24,32 @@ namespace FirstStepApp
         private string m_excelFilePath = "";
         private int m_currentRow = 1;
 
+        // Duplicate detection - stores all scanned 2DIDs
+        private HashSet<string> m_scannedData = new HashSet<string>();
+        private int m_duplicateCount = 0;
+
         // Hardcoded IP addresses for auto-connect
         private const string TARGET_NIC_IP = "192.168.100.11";
         private const string TARGET_READER_IP = "192.168.100.100";
         private bool m_autoConnecting = false;
 
+        // Tray Mode variables
+        private bool m_isTrayMode = false;
+        private int m_trayRows = 0;
+        private int m_trayCols = 0;
+        private int m_currentTrayRow = 1;
+        private int m_currentTrayCol = 1;
+        private string[,] m_trayData = null;  // Stores scanned data for tray grid
+        private Panel m_gridPanel = null;     // Panel for mini-grid display
+
         public Form1()
         {
             InitializeComponent();
+            
+            // Set window title with version number
+            Version version = Assembly.GetExecutingAssembly().GetName().Version;
+            this.Text = $"FirstStepApp - 2D Barcode Scanner  v{version.Major}.{version.Minor}.{version.Build}";
+            
             m_nicList = m_searcher.ListUpNic();
             if (m_nicList != null)
             {
@@ -279,46 +298,91 @@ namespace FirstStepApp
                 {
                     m_excelFilePath = saveDialog.FileName;
 
-                    try
+                    if (m_isTrayMode)
                     {
-                        // Create a new Excel workbook with headers
-                        using (var workbook = new XLWorkbook())
-                        {
-                            var worksheet = workbook.Worksheets.Add("ScanData");
-                            
-                            // Create header row with column titles
-                            worksheet.Cell(1, 1).Value = "No.";
-                            worksheet.Cell(1, 2).Value = "Scan Data";
-                            worksheet.Cell(1, 3).Value = "IP Address";
-                            worksheet.Cell(1, 4).Value = "Timestamp";
-                            
-                            // Style headers
-                            var headerRange = worksheet.Range("A1:D1");
-                            headerRange.Style.Font.Bold = true;
-                            headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
-                            
-                            // Set column widths
-                            worksheet.Column(1).Width = 6;   // No.
-                            worksheet.Column(2).Width = 35;  // Scan Data
-                            worksheet.Column(3).Width = 18;  // IP Address
-                            worksheet.Column(4).Width = 22;  // Timestamp
-                            
-                            workbook.SaveAs(m_excelFilePath);
-                        }
-
-                        m_currentRow = 2; // Start data from row 2 (row 1 is header)
-                        lblStatus.Text = $"Status: File created\n{Path.GetFileName(m_excelFilePath)}\n\nAuto-save enabled!\nScans will be saved automatically.\nNext row: {m_currentRow}";
+                        // Create Tray Mode Excel file
+                        CreateTrayExcelFile();
                     }
-                    catch (Exception ex)
+                    else
                     {
-                        MessageBox.Show($"Error creating file: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        // Create Loose Unit Mode Excel file
+                        CreateLooseUnitExcelFile();
                     }
                 }
             }
         }
 
-        // Auto-save scan data to Excel
+        // Create Excel file for Loose Unit Mode
+        private void CreateLooseUnitExcelFile()
+        {
+            try
+            {
+                // Create a new Excel workbook with headers
+                using (var workbook = new XLWorkbook())
+                {
+                    var worksheet = workbook.Worksheets.Add("ScanData");
+                    
+                    // Create header row with column titles
+                    worksheet.Cell(1, 1).Value = "No.";
+                    worksheet.Cell(1, 2).Value = "Scan Data";
+                    worksheet.Cell(1, 3).Value = "IP Address";
+                    worksheet.Cell(1, 4).Value = "Timestamp";
+                    
+                    // Style headers
+                    var headerRange = worksheet.Range("A1:D1");
+                    headerRange.Style.Font.Bold = true;
+                    headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
+                    
+                    // Set column widths
+                    worksheet.Column(1).Width = 6;   // No.
+                    worksheet.Column(2).Width = 35;  // Scan Data
+                    worksheet.Column(3).Width = 18;  // IP Address
+                    worksheet.Column(4).Width = 22;  // Timestamp
+                    
+                    workbook.SaveAs(m_excelFilePath);
+                }
+
+                m_currentRow = 2; // Start data from row 2 (row 1 is header)
+                
+                // Reset duplicate tracking for new file
+                m_scannedData.Clear();
+                m_duplicateCount = 0;
+                
+                // Reset tray controls visibility
+                btnSkipCell.Visible = false;
+                btnNextRow.Visible = false;
+                lblCurrentPos.Visible = false;
+                pnlTrayGrid.Visible = false;
+                TgrBtn.Visible = true;
+                TgrBtn.Size = new System.Drawing.Size(340, 26);
+                TgrBtn.Location = new System.Drawing.Point(11, 116);
+                
+                // Adjust liveview position for Loose Unit mode (directly below trigger button)
+                liveviewForm1.Location = new System.Drawing.Point(11, 150);
+                
+                lblStatus.Text = $"Status: File created\n{Path.GetFileName(m_excelFilePath)}\n\nAuto-save enabled!\nDuplicate detection ON!\n\nScans will be saved automatically.\nNext row: {m_currentRow}";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error creating file: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        // Auto-save scan data to Excel - routes to correct mode
         private void AutoSaveToExcel(string receivedData)
+        {
+            if (m_isTrayMode)
+            {
+                AutoSaveToTray(receivedData);
+            }
+            else
+            {
+                AutoSaveToLooseUnit(receivedData);
+            }
+        }
+
+        // Auto-save for Loose Unit Mode
+        private void AutoSaveToLooseUnit(string receivedData)
         {
             // Check if Excel file is created
             if (string.IsNullOrEmpty(m_excelFilePath) || !File.Exists(m_excelFilePath))
@@ -333,6 +397,32 @@ namespace FirstStepApp
             {
                 // Empty scan - don't save, update status
                 lblStatus.Text = $"Status: Empty scan skipped\n{Path.GetFileName(m_excelFilePath)}\n\nNo data detected.\nNext row: {m_currentRow}";
+                return;
+            }
+
+            // Check for duplicate scan
+            if (m_scannedData.Contains(rawData))
+            {
+                m_duplicateCount++;
+                // Alert user about duplicate
+                lblStatus.Text = $"Status: DUPLICATE!\n{Path.GetFileName(m_excelFilePath)}\n\nData: {rawData}\n\nThis 2DID was already scanned!\nNot saved to Excel.\n\nDuplicates blocked: {m_duplicateCount}";
+                lblStatus.ForeColor = Color.Red;
+                
+                // Flash the data text box to highlight the duplicate
+                DataText.BackColor = Color.LightCoral;
+                
+                // Reset color after a short delay using a timer
+                Timer resetTimer = new Timer();
+                resetTimer.Interval = 1500; // 1.5 seconds
+                resetTimer.Tick += (s, args) =>
+                {
+                    DataText.BackColor = SystemColors.Control;
+                    lblStatus.ForeColor = SystemColors.ControlText;
+                    resetTimer.Stop();
+                    resetTimer.Dispose();
+                };
+                resetTimer.Start();
+                
                 return;
             }
 
@@ -352,7 +442,10 @@ namespace FirstStepApp
                     workbook.Save();
                 }
 
-                lblStatus.Text = $"Status: Auto-saved!\n{Path.GetFileName(m_excelFilePath)}\n\nRow: {m_currentRow}\nData: {rawData}\n\nNext row: {m_currentRow + 1}";
+                // Add to scanned data set after successful save
+                m_scannedData.Add(rawData);
+
+                lblStatus.Text = $"Status: Auto-saved!\n{Path.GetFileName(m_excelFilePath)}\n\nRow: {m_currentRow}\nData: {rawData}\n\nUnique scans: {m_scannedData.Count}\nNext row: {m_currentRow + 1}";
                 m_currentRow++;
             }
             catch (Exception ex)
@@ -381,6 +474,370 @@ namespace FirstStepApp
             return formattedData.Trim();
         }
 
+        // Mode selection event handlers
+        private void rbLooseUnit_CheckedChanged(object sender, EventArgs e)
+        {
+            if (rbLooseUnit.Checked)
+            {
+                m_isTrayMode = false;
+                pnlTrayConfig.Visible = false;
+                btnSkipCell.Visible = false;
+                btnNextRow.Visible = false;
+                lblCurrentPos.Visible = false;
+                pnlTrayGrid.Visible = false;
+                TgrBtn.Visible = true;
+                TgrBtn.Size = new System.Drawing.Size(340, 26);
+                TgrBtn.Location = new System.Drawing.Point(11, 116);
+                
+                // Adjust liveview position for Loose Unit mode
+                liveviewForm1.Location = new System.Drawing.Point(11, 150);
+                
+                // Reset form width
+                this.ClientSize = new System.Drawing.Size(545, 460);
+                
+                lblStatus.Text = "Status: Loose Unit Mode\n\nWorkflow:\n1. Create Excel file\n2. Scanner auto-connects\n3. Scan and save";
+            }
+        }
+
+        private void rbTray_CheckedChanged(object sender, EventArgs e)
+        {
+            if (rbTray.Checked)
+            {
+                m_isTrayMode = true;
+                pnlTrayConfig.Visible = true;
+                
+                // Expand form to show tray grid
+                this.ClientSize = new System.Drawing.Size(880, 460);
+                
+                lblStatus.Text = "Status: Tray Mode\n\nWorkflow:\n1. Set tray dimensions\n2. Create Excel file\n3. Scanner auto-connects\n4. Scan row by row";
+            }
+        }
+
+        // Create Excel file for Tray Mode
+        private void CreateTrayExcelFile()
+        {
+            m_trayRows = (int)numTrayRows.Value;
+            m_trayCols = (int)numTrayCols.Value;
+            m_currentTrayRow = 1;
+            m_currentTrayCol = 1;
+            m_trayData = new string[m_trayRows, m_trayCols];
+            
+            try
+            {
+                using (var workbook = new XLWorkbook())
+                {
+                    var worksheet = workbook.Worksheets.Add("TrayData");
+                    
+                    // Create corner cell (Row/Col label)
+                    worksheet.Cell(1, 1).Value = "Row/Col";
+                    worksheet.Cell(1, 1).Style.Font.Bold = true;
+                    worksheet.Cell(1, 1).Style.Fill.BackgroundColor = XLColor.LightGray;
+                    worksheet.Cell(1, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                    worksheet.Column(1).Width = 8;
+                    
+                    // Create column headers (1, 2, 3, ...) - starting from column 2
+                    for (int col = 1; col <= m_trayCols; col++)
+                    {
+                        worksheet.Cell(1, col + 1).Value = col;
+                        worksheet.Cell(1, col + 1).Style.Font.Bold = true;
+                        worksheet.Cell(1, col + 1).Style.Fill.BackgroundColor = XLColor.LightGray;
+                        worksheet.Cell(1, col + 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                        worksheet.Column(col + 1).Width = 12;
+                    }
+                    
+                    // Create row headers (1, 2, 3, ...) - starting from row 2
+                    for (int row = 1; row <= m_trayRows; row++)
+                    {
+                        worksheet.Cell(row + 1, 1).Value = row;
+                        worksheet.Cell(row + 1, 1).Style.Font.Bold = true;
+                        worksheet.Cell(row + 1, 1).Style.Fill.BackgroundColor = XLColor.LightGray;
+                        worksheet.Cell(row + 1, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                    }
+                    
+                    workbook.SaveAs(m_excelFilePath);
+                }
+
+                // Reset duplicate tracking
+                m_scannedData.Clear();
+                m_duplicateCount = 0;
+                
+                // Show tray controls - Trigger button full width below Scanner not found label
+                TgrBtn.Visible = true;
+                TgrBtn.Size = new System.Drawing.Size(340, 26);
+                TgrBtn.Location = new System.Drawing.Point(11, 116);
+                
+                // Skip Cell and Next Row buttons below Trigger button
+                btnSkipCell.Visible = true;
+                btnNextRow.Visible = true;
+                lblCurrentPos.Visible = true;
+                btnSkipCell.Enabled = true;
+                btnNextRow.Enabled = true;
+                btnSkipCell.Location = new System.Drawing.Point(11, 148);
+                btnNextRow.Location = new System.Drawing.Point(186, 148);
+                
+                // Adjust liveview position for Tray mode (below the extra row of buttons)
+                liveviewForm1.Location = new System.Drawing.Point(11, 180);
+                
+                // Show tray grid panel
+                pnlTrayGrid.Visible = true;
+                
+                // Create visual mini-grid
+                CreateMiniGrid();
+                
+                UpdateTrayPosition();
+                
+                lblStatus.Text = $"Status: Tray file created\n{Path.GetFileName(m_excelFilePath)}\n\nTray: {m_trayRows} x {m_trayCols}\nTotal cells: {m_trayRows * m_trayCols}\n\nStart scanning!";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error creating tray file: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        // Create the visual mini-grid
+        private void CreateMiniGrid()
+        {
+            pnlTrayGrid.Controls.Clear();
+            
+            // Fixed cell size - does not change with window resize
+            int cellWidth = 12;
+            int cellHeight = 12;
+            
+            // Calculate total grid size (may be larger than panel - that's OK, panel will scroll)
+            int gridWidth = m_trayCols * cellWidth + 2;
+            int gridHeight = m_trayRows * cellHeight + 2;
+            
+            m_gridPanel = new Panel();
+            m_gridPanel.Location = new System.Drawing.Point(5, 5);
+            m_gridPanel.Size = new System.Drawing.Size(gridWidth, gridHeight);
+            m_gridPanel.BorderStyle = BorderStyle.FixedSingle;
+            
+            for (int row = 0; row < m_trayRows; row++)
+            {
+                for (int col = 0; col < m_trayCols; col++)
+                {
+                    Panel cell = new Panel();
+                    cell.Size = new System.Drawing.Size(cellWidth - 1, cellHeight - 1);
+                    cell.Location = new System.Drawing.Point(col * cellWidth, row * cellHeight);
+                    cell.BackColor = Color.LightGray;
+                    cell.BorderStyle = BorderStyle.FixedSingle;
+                    cell.Name = $"cell_{row}_{col}";
+                    m_gridPanel.Controls.Add(cell);
+                }
+            }
+            
+            pnlTrayGrid.Controls.Add(m_gridPanel);
+            
+            // Add legend
+            Label lblLegend = new Label();
+            lblLegend.Text = "Gray=Pending  Green=Scanned  Yellow=Current  Red=Skipped";
+            lblLegend.Location = new System.Drawing.Point(5, m_gridPanel.Bottom + 10);
+            lblLegend.AutoSize = true;
+            lblLegend.Font = new Font("Microsoft Sans Serif", 7F);
+            pnlTrayGrid.Controls.Add(lblLegend);
+            
+            // Highlight current cell
+            UpdateGridHighlight();
+        }
+
+        // Update the mini-grid to highlight current position
+        private void UpdateGridHighlight()
+        {
+            if (m_gridPanel == null) return;
+            
+            for (int row = 0; row < m_trayRows; row++)
+            {
+                for (int col = 0; col < m_trayCols; col++)
+                {
+                    Panel cell = m_gridPanel.Controls[$"cell_{row}_{col}"] as Panel;
+                    if (cell != null)
+                    {
+                        if (row == m_currentTrayRow - 1 && col == m_currentTrayCol - 1)
+                        {
+                            // Current cell - yellow
+                            cell.BackColor = Color.Yellow;
+                        }
+                        else if (m_trayData != null && !string.IsNullOrEmpty(m_trayData[row, col]))
+                        {
+                            if (m_trayData[row, col] == "[SKIPPED]")
+                            {
+                                // Skipped cell - red
+                                cell.BackColor = Color.LightCoral;
+                            }
+                            else
+                            {
+                                // Scanned cell - green
+                                cell.BackColor = Color.LightGreen;
+                            }
+                        }
+                        else
+                        {
+                            // Pending cell - gray
+                            cell.BackColor = Color.LightGray;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Update position display
+        private void UpdateTrayPosition()
+        {
+            int totalCells = m_trayRows * m_trayCols;
+            int scannedCells = 0;
+            
+            if (m_trayData != null)
+            {
+                for (int r = 0; r < m_trayRows; r++)
+                {
+                    for (int c = 0; c < m_trayCols; c++)
+                    {
+                        if (!string.IsNullOrEmpty(m_trayData[r, c]))
+                            scannedCells++;
+                    }
+                }
+            }
+            
+            lblCurrentPos.Text = $"R{m_currentTrayRow}C{m_currentTrayCol} ({scannedCells}/{totalCells})";
+            
+            // Check if tray is complete
+            if (m_currentTrayRow > m_trayRows)
+            {
+                lblCurrentPos.Text = $"COMPLETE! ({scannedCells}/{totalCells})";
+                lblCurrentPos.ForeColor = Color.Green;
+                btnSkipCell.Enabled = false;
+                btnNextRow.Enabled = false;
+                TgrBtn.Enabled = false;
+                
+                lblStatus.Text = $"Status: TRAY COMPLETE!\n{Path.GetFileName(m_excelFilePath)}\n\nAll {totalCells} cells scanned.\n\nCreate new file for next tray.";
+            }
+            
+            UpdateGridHighlight();
+        }
+
+        // Move to next cell
+        private void MoveToNextCell()
+        {
+            m_currentTrayCol++;
+            if (m_currentTrayCol > m_trayCols)
+            {
+                m_currentTrayCol = 1;
+                m_currentTrayRow++;
+            }
+            UpdateTrayPosition();
+        }
+
+        // Skip Cell button handler
+        private void btnSkipCell_Click(object sender, EventArgs e)
+        {
+            if (m_currentTrayRow <= m_trayRows)
+            {
+                // Mark as skipped
+                m_trayData[m_currentTrayRow - 1, m_currentTrayCol - 1] = "[SKIPPED]";
+                
+                // Save empty to Excel (or leave blank)
+                SaveTrayCell("");
+                
+                lblStatus.Text = $"Status: Cell skipped\n{Path.GetFileName(m_excelFilePath)}\n\nSkipped: R{m_currentTrayRow}C{m_currentTrayCol}";
+                
+                MoveToNextCell();
+            }
+        }
+
+        // Next Row button handler
+        private void btnNextRow_Click(object sender, EventArgs e)
+        {
+            if (m_currentTrayRow <= m_trayRows)
+            {
+                // Skip remaining cells in current row
+                while (m_currentTrayCol <= m_trayCols)
+                {
+                    m_trayData[m_currentTrayRow - 1, m_currentTrayCol - 1] = "[SKIPPED]";
+                    SaveTrayCell("");
+                    m_currentTrayCol++;
+                }
+                
+                // Move to next row
+                m_currentTrayCol = 1;
+                m_currentTrayRow++;
+                
+                lblStatus.Text = $"Status: Moved to next row\n{Path.GetFileName(m_excelFilePath)}\n\nNow at: R{m_currentTrayRow}C{m_currentTrayCol}";
+                
+                UpdateTrayPosition();
+            }
+        }
+
+        // Save data to tray Excel cell
+        private void SaveTrayCell(string data)
+        {
+            try
+            {
+                using (var workbook = new XLWorkbook(m_excelFilePath))
+                {
+                    var worksheet = workbook.Worksheet(1);
+                    // Row 1 is column header, so data starts at row 2
+                    // Column 1 is row header, so data starts at column 2
+                    worksheet.Cell(m_currentTrayRow + 1, m_currentTrayCol + 1).Value = data;
+                    workbook.Save();
+                }
+            }
+            catch (Exception ex)
+            {
+                lblStatus.Text = $"Status: Save error!\n{ex.Message}";
+            }
+        }
+
+        // Auto-save for Tray Mode
+        private void AutoSaveToTray(string receivedData)
+        {
+            if (string.IsNullOrEmpty(m_excelFilePath) || !File.Exists(m_excelFilePath))
+                return;
+
+            string rawData = receivedData?.Trim();
+            if (string.IsNullOrWhiteSpace(rawData))
+            {
+                lblStatus.Text = $"Status: Empty scan\n{Path.GetFileName(m_excelFilePath)}\n\nNo data detected.\nPosition: R{m_currentTrayRow}C{m_currentTrayCol}";
+                return;
+            }
+
+            // Check for duplicate
+            if (m_scannedData.Contains(rawData))
+            {
+                m_duplicateCount++;
+                lblStatus.Text = $"Status: DUPLICATE!\n{Path.GetFileName(m_excelFilePath)}\n\nData: {rawData}\n\nThis 2DID was already scanned!\nNot saved.\n\nDuplicates: {m_duplicateCount}";
+                lblStatus.ForeColor = Color.Red;
+                DataText.BackColor = Color.LightCoral;
+                
+                Timer resetTimer = new Timer();
+                resetTimer.Interval = 1500;
+                resetTimer.Tick += (s, args) =>
+                {
+                    DataText.BackColor = SystemColors.Control;
+                    lblStatus.ForeColor = SystemColors.ControlText;
+                    resetTimer.Stop();
+                    resetTimer.Dispose();
+                };
+                resetTimer.Start();
+                return;
+            }
+
+            // Check if tray is complete
+            if (m_currentTrayRow > m_trayRows)
+            {
+                lblStatus.Text = "Status: Tray is complete!\n\nCreate new file for next tray.";
+                return;
+            }
+
+            // Save to tray
+            m_trayData[m_currentTrayRow - 1, m_currentTrayCol - 1] = rawData;
+            SaveTrayCell(rawData);
+            m_scannedData.Add(rawData);
+
+            lblStatus.Text = $"Status: Saved!\n{Path.GetFileName(m_excelFilePath)}\n\nR{m_currentTrayRow}C{m_currentTrayCol}: {rawData}\n\nUnique scans: {m_scannedData.Count}";
+            
+            MoveToNextCell();
+        }
+
         // Show User Guide
         private void btnHelp_Click(object sender, EventArgs e)
         {
@@ -388,42 +845,58 @@ namespace FirstStepApp
        FIRSTSTEP APP - USER GUIDE
 ═══════════════════════════════════════════
 
-STEP 1: CREATE EXCEL FILE
+SCAN MODES
 ───────────────────────────────────────────
-   • Enter a file name in 'File Name' textbox
-   • Click 'Create Excel File'
-   • Choose save location in the dialog
-   • Status shows 'File created'
+• LOOSE UNIT: Sequential list scanning
+• TRAY: Grid-based tray scanning
+
+═══════════════════════════════════════════
+         LOOSE UNIT MODE
+═══════════════════════════════════════════
+
+STEP 1: CREATE EXCEL FILE
+   • Enter file name, click 'Create Excel File'
+   • Choose save location
 
 STEP 2: SCANNER AUTO-CONNECTS
-───────────────────────────────────────────
-   • Scanner connects automatically on startup
-   • Wait for 'Connected' status (green text)
-   • LiveView camera feed will start
-   • No manual selection needed!
+   • Wait for 'Connected' status (green)
 
 STEP 3: SCAN BARCODES
-───────────────────────────────────────────
    • Click 'Trigger On' to scan
-   • Data is AUTO-SAVED to Excel instantly!
-   • Empty scans are automatically skipped
-   • Status shows saved data and row number
+   • Data auto-saves to Excel
+   • Duplicates are blocked
 
-Excel Output Format:
-   Column A: Row Number (1, 2, 3...)
-   Column B: Scan Data (barcode only)
-   Column C: IP Address
-   Column D: Timestamp
+Excel Format: No. | Data | IP | Timestamp
 
+═══════════════════════════════════════════
+            TRAY MODE
+═══════════════════════════════════════════
 
-NOTES
-───────────────────────────────────────────
-• Scanner auto-connects to 192.168.100.100
-• Data is saved AUTOMATICALLY on each scan
-• Empty/null scans are skipped (not saved)
-• Create Excel file BEFORE scanning
-• Create a new file to start fresh
-• Close the app properly to disconnect
+STEP 1: SET TRAY DIMENSIONS
+   • Enter Rows and Columns count
+
+STEP 2: CREATE EXCEL FILE
+   • Creates grid matching tray layout
+
+STEP 3: SCAN ROW BY ROW
+   • Scan left-to-right, top-to-bottom
+   • Current position shown in yellow
+   • Green = scanned, Gray = pending
+   • Red = skipped
+
+TRAY CONTROLS:
+   • Skip Cell: Skip empty position
+   • Next Row: Jump to next row
+   • Trigger On: Scan current cell
+
+Excel Format: Pure grid (matches tray)
+
+═══════════════════════════════════════════
+              NOTES
+═══════════════════════════════════════════
+• Duplicates blocked in both modes
+• Create new file to start fresh
+• Close app properly to disconnect
 
 ═══════════════════════════════════════════";
 
