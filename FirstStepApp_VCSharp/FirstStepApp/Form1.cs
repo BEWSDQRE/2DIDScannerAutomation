@@ -66,6 +66,13 @@ namespace FirstStepApp
 
         private void Form1_Load(object sender, EventArgs e)
         {
+            // Ensure Step 3 controls are on top of liveview
+            lblStep3.BringToFront();
+            DataText.BringToFront();
+            lblFooter.BringToFront();
+            btnHelp.BringToFront();
+            lblStatus.BringToFront();
+            
             // Start auto-connect process
             AutoConnect();
         }
@@ -359,6 +366,17 @@ namespace FirstStepApp
                 
                 // Adjust liveview position for Loose Unit mode (directly below trigger button)
                 liveviewForm1.Location = new System.Drawing.Point(11, 150);
+                liveviewForm1.Size = new System.Drawing.Size(340, 180);
+                
+                // Reset Step 3 and DataText positions for Loose Unit mode
+                lblStep3.Location = new System.Drawing.Point(9, 338);
+                DataText.Location = new System.Drawing.Point(11, 358);
+                lblFooter.Location = new System.Drawing.Point(9, 385);
+                
+                // Bring Step 3 controls to front
+                lblStep3.BringToFront();
+                DataText.BringToFront();
+                lblFooter.BringToFront();
                 
                 lblStatus.Text = $"Status: File created\n{Path.GetFileName(m_excelFilePath)}\n\nAuto-save enabled!\nDuplicate detection ON!\n\nScans will be saved automatically.\nNext row: {m_currentRow}";
             }
@@ -485,15 +503,26 @@ namespace FirstStepApp
                 btnNextRow.Visible = false;
                 lblCurrentPos.Visible = false;
                 pnlTrayGrid.Visible = false;
+                
+                // Reset button and liveview positions for Loose Unit mode
                 TgrBtn.Visible = true;
                 TgrBtn.Size = new System.Drawing.Size(340, 26);
                 TgrBtn.Location = new System.Drawing.Point(11, 116);
-                
-                // Adjust liveview position for Loose Unit mode
                 liveviewForm1.Location = new System.Drawing.Point(11, 150);
+                liveviewForm1.Size = new System.Drawing.Size(340, 180);
                 
-                // Reset form width
-                this.ClientSize = new System.Drawing.Size(545, 460);
+                // Reset Step 3 and DataText positions for Loose Unit mode
+                lblStep3.Location = new System.Drawing.Point(9, 338);
+                DataText.Location = new System.Drawing.Point(11, 358);
+                lblFooter.Location = new System.Drawing.Point(9, 385);
+                
+                // Bring Step 3 controls to front
+                lblStep3.BringToFront();
+                DataText.BringToFront();
+                lblFooter.BringToFront();
+                
+                // Reset form size (narrower, no tray grid)
+                this.ClientSize = new System.Drawing.Size(545, 410);
                 
                 lblStatus.Text = "Status: Loose Unit Mode\n\nWorkflow:\n1. Create Excel file\n2. Scanner auto-connects\n3. Scan and save";
             }
@@ -506,8 +535,31 @@ namespace FirstStepApp
                 m_isTrayMode = true;
                 pnlTrayConfig.Visible = true;
                 
-                // Expand form to show tray grid
-                this.ClientSize = new System.Drawing.Size(880, 460);
+                // Hide tray-specific controls until file is created
+                btnSkipCell.Visible = false;
+                btnNextRow.Visible = false;
+                lblCurrentPos.Visible = false;
+                pnlTrayGrid.Visible = false;
+                
+                // Keep same button/liveview layout as Loose Unit until file is created
+                TgrBtn.Visible = true;
+                TgrBtn.Size = new System.Drawing.Size(340, 26);
+                TgrBtn.Location = new System.Drawing.Point(11, 116);
+                liveviewForm1.Location = new System.Drawing.Point(11, 150);
+                liveviewForm1.Size = new System.Drawing.Size(340, 180);
+                
+                // Keep Step 3 and DataText positions same as Loose Unit until file is created
+                lblStep3.Location = new System.Drawing.Point(9, 338);
+                DataText.Location = new System.Drawing.Point(11, 358);
+                lblFooter.Location = new System.Drawing.Point(9, 385);
+                
+                // Bring Step 3 controls to front
+                lblStep3.BringToFront();
+                DataText.BringToFront();
+                lblFooter.BringToFront();
+                
+                // Expand form to show tray grid (wider, same height as Loose Unit)
+                this.ClientSize = new System.Drawing.Size(880, 410);
                 
                 lblStatus.Text = "Status: Tray Mode\n\nWorkflow:\n1. Set tray dimensions\n2. Create Excel file\n3. Scanner auto-connects\n4. Scan row by row";
             }
@@ -577,6 +629,20 @@ namespace FirstStepApp
                 
                 // Adjust liveview position for Tray mode (below the extra row of buttons)
                 liveviewForm1.Location = new System.Drawing.Point(11, 180);
+                liveviewForm1.Size = new System.Drawing.Size(340, 180);
+                
+                // Adjust Step 3 and DataText positions for Tray mode (liveview moves down 30px)
+                lblStep3.Location = new System.Drawing.Point(9, 368);
+                DataText.Location = new System.Drawing.Point(11, 388);
+                lblFooter.Location = new System.Drawing.Point(9, 415);
+                
+                // Bring Step 3 controls to front
+                lblStep3.BringToFront();
+                DataText.BringToFront();
+                lblFooter.BringToFront();
+                
+                // Expand form height for tray mode with extra buttons
+                this.ClientSize = new System.Drawing.Size(880, 440);
                 
                 // Show tray grid panel
                 pnlTrayGrid.Visible = true;

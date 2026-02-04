@@ -323,10 +323,10 @@ namespace FirstStepApp
             this.liveviewForm1.ImageFormat = Keyence.AutoID.SDK.LiveviewForm.ImageFormatType.Jpeg;
             this.liveviewForm1.ImageQuality = 3;
             this.liveviewForm1.IpAddress = "192.168.100.100";
-            this.liveviewForm1.Location = new System.Drawing.Point(11, 180);
+            this.liveviewForm1.Location = new System.Drawing.Point(11, 150);
             this.liveviewForm1.Name = "liveviewForm1";
             this.liveviewForm1.PullTimeSpan = 1;
-            this.liveviewForm1.Size = new System.Drawing.Size(340, 200);
+            this.liveviewForm1.Size = new System.Drawing.Size(340, 180);
             this.liveviewForm1.TabIndex = 0;
             this.liveviewForm1.TimeoutMs = 100;
             // 
@@ -334,7 +334,7 @@ namespace FirstStepApp
             // 
             this.lblStep3.AutoSize = true;
             this.lblStep3.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold);
-            this.lblStep3.Location = new System.Drawing.Point(9, 388);
+            this.lblStep3.Location = new System.Drawing.Point(9, 338);
             this.lblStep3.Name = "lblStep3";
             this.lblStep3.Size = new System.Drawing.Size(180, 13);
             this.lblStep3.TabIndex = 18;
@@ -343,7 +343,7 @@ namespace FirstStepApp
             // DataText
             // 
             this.DataText.BackColor = System.Drawing.SystemColors.Control;
-            this.DataText.Location = new System.Drawing.Point(11, 408);
+            this.DataText.Location = new System.Drawing.Point(11, 358);
             this.DataText.Name = "DataText";
             this.DataText.ReadOnly = true;
             this.DataText.ScrollBars = System.Windows.Forms.ScrollBars.Both;
@@ -356,23 +356,23 @@ namespace FirstStepApp
             this.pnlTrayGrid.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.pnlTrayGrid.Location = new System.Drawing.Point(545, 30);
             this.pnlTrayGrid.Name = "pnlTrayGrid";
-            this.pnlTrayGrid.Size = new System.Drawing.Size(320, 410);
+            this.pnlTrayGrid.Size = new System.Drawing.Size(320, 370);
             this.pnlTrayGrid.TabIndex = 33;
             this.pnlTrayGrid.Visible = false;
-            this.pnlTrayGrid.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right));
+            this.pnlTrayGrid.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right));
             // 
             // lblStatus
             // 
             this.lblStatus.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.lblStatus.Location = new System.Drawing.Point(360, 30);
             this.lblStatus.Name = "lblStatus";
-            this.lblStatus.Size = new System.Drawing.Size(170, 360);
+            this.lblStatus.Size = new System.Drawing.Size(170, 320);
             this.lblStatus.TabIndex = 14;
             this.lblStatus.Text = "Status:\nAuto-connecting...\n\nWorkflow:\n1. Select mode\n2. Create Excel file\n3. Scanner auto-connects\n4. Scan and save";
             // 
             // btnHelp
             // 
-            this.btnHelp.Location = new System.Drawing.Point(360, 405);
+            this.btnHelp.Location = new System.Drawing.Point(360, 358);
             this.btnHelp.Name = "btnHelp";
             this.btnHelp.Size = new System.Drawing.Size(170, 26);
             this.btnHelp.TabIndex = 10;
@@ -386,7 +386,7 @@ namespace FirstStepApp
             this.lblFooter.AutoSize = true;
             this.lblFooter.ForeColor = System.Drawing.Color.Gray;
             this.lblFooter.Font = new System.Drawing.Font("Microsoft Sans Serif", 7F);
-            this.lblFooter.Location = new System.Drawing.Point(9, 435);
+            this.lblFooter.Location = new System.Drawing.Point(9, 385);
             this.lblFooter.Name = "lblFooter";
             this.lblFooter.Size = new System.Drawing.Size(300, 12);
             this.lblFooter.TabIndex = 34;
@@ -396,7 +396,7 @@ namespace FirstStepApp
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(545, 460);
+            this.ClientSize = new System.Drawing.Size(545, 410);
             this.Controls.Add(this.lblMode);
             this.Controls.Add(this.rbLooseUnit);
             this.Controls.Add(this.rbTray);
