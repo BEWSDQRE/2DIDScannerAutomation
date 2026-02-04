@@ -522,7 +522,7 @@ namespace FirstStepApp
                 lblFooter.BringToFront();
                 
                 // Reset form size (narrower, no tray grid)
-                this.ClientSize = new System.Drawing.Size(545, 410);
+                this.ClientSize = new System.Drawing.Size(545, 440);
                 
                 lblStatus.Text = "Status: Loose Unit Mode\n\nWorkflow:\n1. Create Excel file\n2. Scanner auto-connects\n3. Scan and save";
             }
@@ -559,7 +559,7 @@ namespace FirstStepApp
                 lblFooter.BringToFront();
                 
                 // Expand form to show tray grid (wider, same height as Loose Unit)
-                this.ClientSize = new System.Drawing.Size(880, 410);
+                this.ClientSize = new System.Drawing.Size(880, 440);
                 
                 lblStatus.Text = "Status: Tray Mode\n\nWorkflow:\n1. Set tray dimensions\n2. Create Excel file\n3. Scanner auto-connects\n4. Scan row by row";
             }
