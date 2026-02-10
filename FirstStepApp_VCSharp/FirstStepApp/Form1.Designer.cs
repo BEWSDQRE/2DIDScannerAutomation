@@ -276,7 +276,7 @@ namespace FirstStepApp
             this.TgrBtn.Name = "TgrBtn";
             this.TgrBtn.Size = new System.Drawing.Size(340, 26);
             this.TgrBtn.TabIndex = 7;
-            this.TgrBtn.Text = "Trigger On (Scan)";
+            this.TgrBtn.Text = "Trigger On (Scan) - (`)";
             this.TgrBtn.UseVisualStyleBackColor = true;
             this.TgrBtn.Click += new System.EventHandler(this.TgrBtn_Click);
             // 
@@ -287,7 +287,7 @@ namespace FirstStepApp
             this.btnSkipCell.Name = "btnSkipCell";
             this.btnSkipCell.Size = new System.Drawing.Size(165, 26);
             this.btnSkipCell.TabIndex = 30;
-            this.btnSkipCell.Text = "Skip Cell";
+            this.btnSkipCell.Text = "Skip Cell - (-)";
             this.btnSkipCell.UseVisualStyleBackColor = true;
             this.btnSkipCell.Visible = false;
             this.btnSkipCell.Click += new System.EventHandler(this.btnSkipCell_Click);
@@ -299,7 +299,7 @@ namespace FirstStepApp
             this.btnNextRow.Name = "btnNextRow";
             this.btnNextRow.Size = new System.Drawing.Size(165, 26);
             this.btnNextRow.TabIndex = 31;
-            this.btnNextRow.Text = "Next Row";
+            this.btnNextRow.Text = "Next Row - (=)";
             this.btnNextRow.UseVisualStyleBackColor = true;
             this.btnNextRow.Visible = false;
             this.btnNextRow.Click += new System.EventHandler(this.btnNextRow_Click);

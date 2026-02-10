@@ -60,8 +60,35 @@ namespace FirstStepApp
             }
             NICcomboBox.SelectedIndex = 0;
 
+            // Enable form-level key capture for foot pedal support
+            this.KeyPreview = true;
+            this.KeyPress += Form1_KeyPress;
+
             // Auto-connect on form load
             this.Load += Form1_Load;
+        }
+
+        // Foot pedal / keyboard shortcut support
+        private void Form1_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (e.KeyChar == '`' && TgrBtn.Enabled)
+            {
+                // Backtick (`) triggers the scanner
+                TgrBtn_Click(sender, EventArgs.Empty);
+                e.Handled = true;
+            }
+            else if (e.KeyChar == '-' && btnSkipCell.Visible && btnSkipCell.Enabled)
+            {
+                // Minus (-) skips the current cell
+                btnSkipCell_Click(sender, EventArgs.Empty);
+                e.Handled = true;
+            }
+            else if (e.KeyChar == '=' && btnNextRow.Visible && btnNextRow.Enabled)
+            {
+                // Equals (=) skips to the next row
+                btnNextRow_Click(sender, EventArgs.Empty);
+                e.Handled = true;
+            }
         }
 
         private void Form1_Load(object sender, EventArgs e)
