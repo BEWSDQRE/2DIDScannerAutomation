@@ -53,44 +53,8 @@ echo   Copied: FirstStepApp.exe
 copy "%SOURCE_DIR%\FirstStepApp.exe.config" "%APP_DIR%\" /Y 2>nul
 if exist "%APP_DIR%\FirstStepApp.exe.config" echo   Copied: FirstStepApp.exe.config
 
-copy "%SOURCE_DIR%\ClosedXML.dll" "%APP_DIR%\" /Y 2>nul
-if exist "%APP_DIR%\ClosedXML.dll" echo   Copied: ClosedXML.dll
-
-copy "%SOURCE_DIR%\ClosedXML.Parser.dll" "%APP_DIR%\" /Y 2>nul
-if exist "%APP_DIR%\ClosedXML.Parser.dll" echo   Copied: ClosedXML.Parser.dll
-
-copy "%SOURCE_DIR%\DocumentFormat.OpenXml.dll" "%APP_DIR%\" /Y 2>nul
-if exist "%APP_DIR%\DocumentFormat.OpenXml.dll" echo   Copied: DocumentFormat.OpenXml.dll
-
-copy "%SOURCE_DIR%\DocumentFormat.OpenXml.Framework.dll" "%APP_DIR%\" /Y 2>nul
-if exist "%APP_DIR%\DocumentFormat.OpenXml.Framework.dll" echo   Copied: DocumentFormat.OpenXml.Framework.dll
-
-copy "%SOURCE_DIR%\ExcelNumberFormat.dll" "%APP_DIR%\" /Y 2>nul
-if exist "%APP_DIR%\ExcelNumberFormat.dll" echo   Copied: ExcelNumberFormat.dll
-
-copy "%SOURCE_DIR%\Microsoft.Bcl.HashCode.dll" "%APP_DIR%\" /Y 2>nul
-if exist "%APP_DIR%\Microsoft.Bcl.HashCode.dll" echo   Copied: Microsoft.Bcl.HashCode.dll
-
-copy "%SOURCE_DIR%\RBush.dll" "%APP_DIR%\" /Y 2>nul
-if exist "%APP_DIR%\RBush.dll" echo   Copied: RBush.dll
-
-copy "%SOURCE_DIR%\SixLabors.Fonts.dll" "%APP_DIR%\" /Y 2>nul
-if exist "%APP_DIR%\SixLabors.Fonts.dll" echo   Copied: SixLabors.Fonts.dll
-
-copy "%SOURCE_DIR%\System.Buffers.dll" "%APP_DIR%\" /Y 2>nul
-if exist "%APP_DIR%\System.Buffers.dll" echo   Copied: System.Buffers.dll
-
-copy "%SOURCE_DIR%\System.IO.Packaging.dll" "%APP_DIR%\" /Y 2>nul
-if exist "%APP_DIR%\System.IO.Packaging.dll" echo   Copied: System.IO.Packaging.dll
-
-copy "%SOURCE_DIR%\System.Memory.dll" "%APP_DIR%\" /Y 2>nul
-if exist "%APP_DIR%\System.Memory.dll" echo   Copied: System.Memory.dll
-
-copy "%SOURCE_DIR%\System.Numerics.Vectors.dll" "%APP_DIR%\" /Y 2>nul
-if exist "%APP_DIR%\System.Numerics.Vectors.dll" echo   Copied: System.Numerics.Vectors.dll
-
-copy "%SOURCE_DIR%\System.Runtime.CompilerServices.Unsafe.dll" "%APP_DIR%\" /Y 2>nul
-if exist "%APP_DIR%\System.Runtime.CompilerServices.Unsafe.dll" echo   Copied: System.Runtime.CompilerServices.Unsafe.dll
+copy "%SOURCE_DIR%\EPPlus.dll" "%APP_DIR%\" /Y 2>nul
+if exist "%APP_DIR%\EPPlus.dll" echo   Copied: EPPlus.dll
 
 REM Copy Keyence SDK files
 copy "%SOURCE_DIR%\Communication.dll" "%APP_DIR%\" /Y 2>nul

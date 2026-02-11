@@ -10,7 +10,8 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Keyence.AutoID.SDK;
-using ClosedXML.Excel;
+using OfficeOpenXml;
+using OfficeOpenXml.Style;
 
 namespace FirstStepApp
 {
@@ -263,7 +264,7 @@ namespace FirstStepApp
         {
             if(comboBox1.SelectedItem != null)
             {
-                //ExecCommand("command")is for sending a command and getting a command response.
+                //ExecCommand("LON") triggers the scanner and returns the scanned data.
                 ReceivedDataWrite(m_reader.ExecCommand("LON"));
             }
         }
@@ -271,7 +272,14 @@ namespace FirstStepApp
         private delegate void delegateUserControl(string str);
         private void ReceivedDataWrite(string receivedData)
         {
+            // Update the text field first so the user can see the scanned data
             DataText.Text=("[" + m_reader.IpAddress + "][" + DateTime.Now + "]" + receivedData);
+            
+            // Force the UI to repaint immediately so the user sees the result
+            // before the Excel save operation (which can take time and block the UI thread)
+            DataText.Refresh();
+            lblStatus.Refresh();
+            Application.DoEvents();
             
             // Auto-save to Excel if file is created and data is not empty
             AutoSaveToExcel(receivedData);
@@ -352,20 +360,24 @@ namespace FirstStepApp
             try
             {
                 // Create a new Excel workbook with headers
-                using (var workbook = new XLWorkbook())
+                FileInfo fileInfo = new FileInfo(m_excelFilePath);
+                using (var package = new ExcelPackage(fileInfo))
                 {
-                    var worksheet = workbook.Worksheets.Add("ScanData");
+                    var worksheet = package.Workbook.Worksheets.Add("ScanData");
                     
                     // Create header row with column titles
-                    worksheet.Cell(1, 1).Value = "No.";
-                    worksheet.Cell(1, 2).Value = "Scan Data";
-                    worksheet.Cell(1, 3).Value = "IP Address";
-                    worksheet.Cell(1, 4).Value = "Timestamp";
+                    worksheet.Cells[1, 1].Value = "No.";
+                    worksheet.Cells[1, 2].Value = "Scan Data";
+                    worksheet.Cells[1, 3].Value = "IP Address";
+                    worksheet.Cells[1, 4].Value = "Timestamp";
                     
                     // Style headers
-                    var headerRange = worksheet.Range("A1:D1");
-                    headerRange.Style.Font.Bold = true;
-                    headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
+                    using (var headerRange = worksheet.Cells["A1:D1"])
+                    {
+                        headerRange.Style.Font.Bold = true;
+                        headerRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                        headerRange.Style.Fill.BackgroundColor.SetColor(Color.LightGray);
+                    }
                     
                     // Set column widths
                     worksheet.Column(1).Width = 6;   // No.
@@ -373,7 +385,7 @@ namespace FirstStepApp
                     worksheet.Column(3).Width = 18;  // IP Address
                     worksheet.Column(4).Width = 22;  // Timestamp
                     
-                    workbook.SaveAs(m_excelFilePath);
+                    package.Save();
                 }
 
                 m_currentRow = 2; // Start data from row 2 (row 1 is header)
@@ -471,30 +483,39 @@ namespace FirstStepApp
                 return;
             }
 
+            // Add to duplicate tracking BEFORE saving to Excel
+            // This prevents the race where data is saved but UI hasn't updated,
+            // causing the user to scan again and trigger a false duplicate
+            m_scannedData.Add(rawData);
+
+            // Show immediate feedback that scan was accepted
+            lblStatus.Text = $"Status: Saving...\n{Path.GetFileName(m_excelFilePath)}\n\nRow: {m_currentRow}\nData: {rawData}\n\nUnique scans: {m_scannedData.Count}";
+            lblStatus.Refresh();
+
             try
             {
-                using (var workbook = new XLWorkbook(m_excelFilePath))
+                FileInfo fileInfo = new FileInfo(m_excelFilePath);
+                using (var package = new ExcelPackage(fileInfo))
                 {
-                    var worksheet = workbook.Worksheet(1);
+                    var worksheet = package.Workbook.Worksheets[1];
                     
                     // Save data in separate columns
                     int rowNumber = m_currentRow - 1; // Row number (1, 2, 3...)
-                    worksheet.Cell(m_currentRow, 1).Value = rowNumber;           // No.
-                    worksheet.Cell(m_currentRow, 2).Value = rawData;             // Scan Data only
-                    worksheet.Cell(m_currentRow, 3).Value = m_reader.IpAddress;  // IP Address
-                    worksheet.Cell(m_currentRow, 4).Value = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"); // Timestamp
+                    worksheet.Cells[m_currentRow, 1].Value = rowNumber;           // No.
+                    worksheet.Cells[m_currentRow, 2].Value = rawData;             // Scan Data only
+                    worksheet.Cells[m_currentRow, 3].Value = m_reader.IpAddress;  // IP Address
+                    worksheet.Cells[m_currentRow, 4].Value = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"); // Timestamp
                     
-                    workbook.Save();
+                    package.Save();
                 }
-
-                // Add to scanned data set after successful save
-                m_scannedData.Add(rawData);
 
                 lblStatus.Text = $"Status: Auto-saved!\n{Path.GetFileName(m_excelFilePath)}\n\nRow: {m_currentRow}\nData: {rawData}\n\nUnique scans: {m_scannedData.Count}\nNext row: {m_currentRow + 1}";
                 m_currentRow++;
             }
             catch (Exception ex)
             {
+                // Remove from tracking if save failed so user can retry
+                m_scannedData.Remove(rawData);
                 lblStatus.Text = $"Status: Save error!\n{ex.Message}";
             }
         }
@@ -603,37 +624,41 @@ namespace FirstStepApp
             
             try
             {
-                using (var workbook = new XLWorkbook())
+                FileInfo fileInfo = new FileInfo(m_excelFilePath);
+                using (var package = new ExcelPackage(fileInfo))
                 {
-                    var worksheet = workbook.Worksheets.Add("TrayData");
+                    var worksheet = package.Workbook.Worksheets.Add("TrayData");
                     
                     // Create corner cell (Row/Col label)
-                    worksheet.Cell(1, 1).Value = "Row/Col";
-                    worksheet.Cell(1, 1).Style.Font.Bold = true;
-                    worksheet.Cell(1, 1).Style.Fill.BackgroundColor = XLColor.LightGray;
-                    worksheet.Cell(1, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                    worksheet.Cells[1, 1].Value = "Row/Col";
+                    worksheet.Cells[1, 1].Style.Font.Bold = true;
+                    worksheet.Cells[1, 1].Style.Fill.PatternType = ExcelFillStyle.Solid;
+                    worksheet.Cells[1, 1].Style.Fill.BackgroundColor.SetColor(Color.LightGray);
+                    worksheet.Cells[1, 1].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
                     worksheet.Column(1).Width = 8;
                     
                     // Create column headers (1, 2, 3, ...) - starting from column 2
                     for (int col = 1; col <= m_trayCols; col++)
                     {
-                        worksheet.Cell(1, col + 1).Value = col;
-                        worksheet.Cell(1, col + 1).Style.Font.Bold = true;
-                        worksheet.Cell(1, col + 1).Style.Fill.BackgroundColor = XLColor.LightGray;
-                        worksheet.Cell(1, col + 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                        worksheet.Cells[1, col + 1].Value = col;
+                        worksheet.Cells[1, col + 1].Style.Font.Bold = true;
+                        worksheet.Cells[1, col + 1].Style.Fill.PatternType = ExcelFillStyle.Solid;
+                        worksheet.Cells[1, col + 1].Style.Fill.BackgroundColor.SetColor(Color.LightGray);
+                        worksheet.Cells[1, col + 1].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
                         worksheet.Column(col + 1).Width = 12;
                     }
                     
                     // Create row headers (1, 2, 3, ...) - starting from row 2
                     for (int row = 1; row <= m_trayRows; row++)
                     {
-                        worksheet.Cell(row + 1, 1).Value = row;
-                        worksheet.Cell(row + 1, 1).Style.Font.Bold = true;
-                        worksheet.Cell(row + 1, 1).Style.Fill.BackgroundColor = XLColor.LightGray;
-                        worksheet.Cell(row + 1, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                        worksheet.Cells[row + 1, 1].Value = row;
+                        worksheet.Cells[row + 1, 1].Style.Font.Bold = true;
+                        worksheet.Cells[row + 1, 1].Style.Fill.PatternType = ExcelFillStyle.Solid;
+                        worksheet.Cells[row + 1, 1].Style.Fill.BackgroundColor.SetColor(Color.LightGray);
+                        worksheet.Cells[row + 1, 1].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
                     }
                     
-                    workbook.SaveAs(m_excelFilePath);
+                    package.Save();
                 }
 
                 // Reset duplicate tracking
@@ -860,23 +885,26 @@ namespace FirstStepApp
             }
         }
 
-        // Save data to tray Excel cell
-        private void SaveTrayCell(string data)
+        // Save data to tray Excel cell. Returns true on success, false on failure.
+        private bool SaveTrayCell(string data)
         {
             try
             {
-                using (var workbook = new XLWorkbook(m_excelFilePath))
+                FileInfo fileInfo = new FileInfo(m_excelFilePath);
+                using (var package = new ExcelPackage(fileInfo))
                 {
-                    var worksheet = workbook.Worksheet(1);
+                    var worksheet = package.Workbook.Worksheets[1];
                     // Row 1 is column header, so data starts at row 2
                     // Column 1 is row header, so data starts at column 2
-                    worksheet.Cell(m_currentTrayRow + 1, m_currentTrayCol + 1).Value = data;
-                    workbook.Save();
+                    worksheet.Cells[m_currentTrayRow + 1, m_currentTrayCol + 1].Value = data;
+                    package.Save();
                 }
+                return true;
             }
             catch (Exception ex)
             {
                 lblStatus.Text = $"Status: Save error!\n{ex.Message}";
+                return false;
             }
         }
 
@@ -921,14 +949,30 @@ namespace FirstStepApp
                 return;
             }
 
-            // Save to tray
-            m_trayData[m_currentTrayRow - 1, m_currentTrayCol - 1] = rawData;
-            SaveTrayCell(rawData);
+            // Add to duplicate tracking BEFORE saving to Excel
+            // This prevents the race where data is saved but UI hasn't updated,
+            // causing the user to scan again and trigger a false duplicate
             m_scannedData.Add(rawData);
+            m_trayData[m_currentTrayRow - 1, m_currentTrayCol - 1] = rawData;
 
-            lblStatus.Text = $"Status: Saved!\n{Path.GetFileName(m_excelFilePath)}\n\nR{m_currentTrayRow}C{m_currentTrayCol}: {rawData}\n\nUnique scans: {m_scannedData.Count}";
-            
-            MoveToNextCell();
+            // Show immediate feedback that scan was accepted
+            lblStatus.Text = $"Status: Saving...\n{Path.GetFileName(m_excelFilePath)}\n\nR{m_currentTrayRow}C{m_currentTrayCol}: {rawData}\n\nUnique scans: {m_scannedData.Count}";
+            lblStatus.Refresh();
+            UpdateGridHighlight();
+
+            if (SaveTrayCell(rawData))
+            {
+                lblStatus.Text = $"Status: Saved!\n{Path.GetFileName(m_excelFilePath)}\n\nR{m_currentTrayRow}C{m_currentTrayCol}: {rawData}\n\nUnique scans: {m_scannedData.Count}";
+                
+                MoveToNextCell();
+            }
+            else
+            {
+                // Roll back tracking if save failed so user can retry
+                m_scannedData.Remove(rawData);
+                m_trayData[m_currentTrayRow - 1, m_currentTrayCol - 1] = null;
+                UpdateGridHighlight();
+            }
         }
 
         // Show User Guide
