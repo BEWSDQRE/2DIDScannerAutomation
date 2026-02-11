@@ -10,6 +10,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Keyence.AutoID.SDK;
+using System.Net.Mail;
 using OfficeOpenXml;
 using OfficeOpenXml.Style;
 
@@ -99,6 +100,7 @@ namespace FirstStepApp
             DataText.BringToFront();
             lblFooter.BringToFront();
             btnHelp.BringToFront();
+            btnSendEmail.BringToFront();
             lblStatus.BringToFront();
             
             // Start auto-connect process
@@ -973,6 +975,142 @@ namespace FirstStepApp
                 m_trayData[m_currentTrayRow - 1, m_currentTrayCol - 1] = null;
                 UpdateGridHighlight();
             }
+        }
+
+        // Send Email button handler
+        private void btnSendEmail_Click(object sender, EventArgs e)
+        {
+            // Check if an Excel file exists to send
+            if (string.IsNullOrEmpty(m_excelFilePath) || !File.Exists(m_excelFilePath))
+            {
+                MessageBox.Show("No Excel file to send.\nPlease create and scan data first.", 
+                    "No File", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // Prompt user for recipient email address
+            string recipient = ShowEmailInputDialog();
+            if (string.IsNullOrWhiteSpace(recipient))
+                return; // User cancelled
+
+            // Send the email with the Excel file attached
+            string fileName = Path.GetFileName(m_excelFilePath);
+            string subject = $"2DID Scan Data - {fileName}";
+            string body = $"<p>Please find attached the 2DID scan data file: <b>{fileName}</b></p>"
+                        + $"<p>Unique scans: {m_scannedData.Count}</p>"
+                        + $"<p>Sent from FirstStepApp at {DateTime.Now:yyyy-MM-dd HH:mm:ss}</p>";
+
+            try
+            {
+                btnSendEmail.Enabled = false;
+                btnSendEmail.Text = "Sending...";
+                btnSendEmail.Refresh();
+
+                using (Attachment attachment = new Attachment(m_excelFilePath))
+                {
+                    SendEmailWithAttachment(subject, recipient, body, attachment);
+                }
+
+                lblStatus.Text = $"Status: Email sent!\n{fileName}\n\nSent to:\n{recipient}";
+                MessageBox.Show($"Email sent successfully to:\n{recipient}", 
+                    "Email Sent", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                lblStatus.Text = $"Status: Email failed!\n{ex.Message}";
+                MessageBox.Show($"Failed to send email:\n{ex.Message}", 
+                    "Email Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                btnSendEmail.Enabled = true;
+                btnSendEmail.Text = "Send Email";
+            }
+        }
+
+        // Show a simple input dialog for email address
+        private string ShowEmailInputDialog()
+        {
+            Form inputForm = new Form();
+            inputForm.Text = "Send Excel File via Email";
+            inputForm.Size = new System.Drawing.Size(400, 180);
+            inputForm.StartPosition = FormStartPosition.CenterParent;
+            inputForm.FormBorderStyle = FormBorderStyle.FixedDialog;
+            inputForm.MaximizeBox = false;
+            inputForm.MinimizeBox = false;
+
+            Label lblPrompt = new Label();
+            lblPrompt.Text = "Enter recipient email address(es):\n(Separate multiple emails with commas)";
+            lblPrompt.Location = new System.Drawing.Point(15, 15);
+            lblPrompt.Size = new System.Drawing.Size(360, 35);
+
+            TextBox txtEmail = new TextBox();
+            txtEmail.Location = new System.Drawing.Point(15, 55);
+            txtEmail.Size = new System.Drawing.Size(355, 20);
+            txtEmail.Text = "";
+
+            Label lblFile = new Label();
+            lblFile.Text = $"File: {Path.GetFileName(m_excelFilePath)}  ({m_scannedData.Count} scans)";
+            lblFile.Location = new System.Drawing.Point(15, 82);
+            lblFile.Size = new System.Drawing.Size(355, 15);
+            lblFile.ForeColor = Color.Gray;
+
+            Button btnOK = new Button();
+            btnOK.Text = "Send";
+            btnOK.Location = new System.Drawing.Point(210, 105);
+            btnOK.Size = new System.Drawing.Size(75, 26);
+            btnOK.DialogResult = DialogResult.OK;
+
+            Button btnCancel = new Button();
+            btnCancel.Text = "Cancel";
+            btnCancel.Location = new System.Drawing.Point(295, 105);
+            btnCancel.Size = new System.Drawing.Size(75, 26);
+            btnCancel.DialogResult = DialogResult.Cancel;
+
+            inputForm.Controls.AddRange(new Control[] { lblPrompt, txtEmail, lblFile, btnOK, btnCancel });
+            inputForm.AcceptButton = btnOK;
+            inputForm.CancelButton = btnCancel;
+
+            if (inputForm.ShowDialog(this) == DialogResult.OK)
+            {
+                string email = txtEmail.Text.Trim();
+                if (string.IsNullOrWhiteSpace(email))
+                {
+                    MessageBox.Show("Please enter an email address.", "Error", 
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return null;
+                }
+                return email;
+            }
+            return null;
+        }
+
+        // Send email with attachment via Broadcom SMTP relay
+        private void SendEmailWithAttachment(string subject, string recipient, string body, Attachment attachment)
+        {
+            MailMessage mail = new MailMessage();
+            mail.From = new MailAddress("QREPortal@broadcom.com");
+            var recdList = recipient.Split(',')
+                    .Select(r => r.Trim())
+                    .Where(r => !string.IsNullOrEmpty(r))
+                    .Distinct()
+                    .ToList();
+            foreach (var recd in recdList)
+                mail.To.Add(recd);
+            mail.Subject = subject;
+            mail.Body = body;
+            mail.IsBodyHtml = true;
+
+            if (attachment != null)
+            {
+                mail.Attachments.Add(attachment);
+            }
+
+            SmtpClient smtpClient = new SmtpClient("apps-relay.smtp.broadcom.com");
+            smtpClient.Port = 25;
+            smtpClient.Timeout = 60000;
+
+            smtpClient.Send(mail);
         }
 
         // Show User Guide

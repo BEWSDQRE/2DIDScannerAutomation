@@ -40,6 +40,7 @@ namespace FirstStepApp
             this.btnCreateFile = new System.Windows.Forms.Button();
             this.lblStatus = new System.Windows.Forms.Label();
             this.btnHelp = new System.Windows.Forms.Button();
+            this.btnSendEmail = new System.Windows.Forms.Button();
             this.lblStep1 = new System.Windows.Forms.Label();
             this.lblStep2 = new System.Windows.Forms.Label();
             this.lblStep3 = new System.Windows.Forms.Label();
@@ -374,11 +375,21 @@ namespace FirstStepApp
             // 
             this.btnHelp.Location = new System.Drawing.Point(360, 358);
             this.btnHelp.Name = "btnHelp";
-            this.btnHelp.Size = new System.Drawing.Size(170, 26);
+            this.btnHelp.Size = new System.Drawing.Size(80, 26);
             this.btnHelp.TabIndex = 10;
-            this.btnHelp.Text = "Help / User Guide";
+            this.btnHelp.Text = "Help";
             this.btnHelp.UseVisualStyleBackColor = true;
             this.btnHelp.Click += new System.EventHandler(this.btnHelp_Click);
+            // 
+            // btnSendEmail
+            // 
+            this.btnSendEmail.Location = new System.Drawing.Point(445, 358);
+            this.btnSendEmail.Name = "btnSendEmail";
+            this.btnSendEmail.Size = new System.Drawing.Size(85, 26);
+            this.btnSendEmail.TabIndex = 35;
+            this.btnSendEmail.Text = "Send Email";
+            this.btnSendEmail.UseVisualStyleBackColor = true;
+            this.btnSendEmail.Click += new System.EventHandler(this.btnSendEmail_Click);
             // 
             // lblFooter
             // 
@@ -421,6 +432,7 @@ namespace FirstStepApp
             this.Controls.Add(this.DataText);
             this.Controls.Add(this.lblStatus);
             this.Controls.Add(this.btnHelp);
+            this.Controls.Add(this.btnSendEmail);
             this.Controls.Add(this.pnlTrayGrid);
             this.Controls.Add(this.lblFooter);
             this.Name = "Form1";
@@ -466,6 +478,7 @@ namespace FirstStepApp
         private System.Windows.Forms.Label lblCurrentPos;
         private System.Windows.Forms.Panel pnlTrayGrid;
         private System.Windows.Forms.Label lblFooter;
+        private System.Windows.Forms.Button btnSendEmail;
     }
 }
 
