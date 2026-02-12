@@ -47,6 +47,7 @@ namespace FirstStepApp
         public Form1()
         {
             InitializeComponent();
+            LoadEmailRecipients();
             
             // Set window title with version number
             Version version = Assembly.GetExecutingAssembly().GetName().Version;
@@ -403,23 +404,11 @@ namespace FirstStepApp
                 pnlTrayGrid.Visible = false;
                 TgrBtn.Visible = true;
                 TgrBtn.Size = new System.Drawing.Size(340, 26);
-                TgrBtn.Location = new System.Drawing.Point(11, 116);
                 
-                // Adjust liveview position for Loose Unit mode (directly below trigger button)
-                liveviewForm1.Location = new System.Drawing.Point(11, 150);
-                liveviewForm1.Size = new System.Drawing.Size(340, 180);
+                RepositionControls(0, false);
                 
-                // Reset Step 3 and DataText positions for Loose Unit mode
-                lblStep3.Location = new System.Drawing.Point(9, 338);
-                DataText.Location = new System.Drawing.Point(11, 358);
-                lblFooter.Location = new System.Drawing.Point(9, 385);
-                
-                // Bring Step 3 controls to front
-                lblStep3.BringToFront();
-                DataText.BringToFront();
-                lblFooter.BringToFront();
-                
-                lblStatus.Text = $"Status: File created\n{Path.GetFileName(m_excelFilePath)}\n\nAuto-save enabled!\nDuplicate detection ON!\n\nScans will be saved automatically.\nNext row: {m_currentRow}";
+                string emailInfo = GetSelectedEmailSummary();
+                lblStatus.Text = $"Status: File created\n{Path.GetFileName(m_excelFilePath)}\n\nAuto-save enabled!\nDuplicate detection ON!\nEmail: {emailInfo}\n\nNext row: {m_currentRow}";
             }
             catch (Exception ex)
             {
@@ -542,6 +531,64 @@ namespace FirstStepApp
             return formattedData.Trim();
         }
 
+        // Reposition all controls below the tray config area based on current mode
+        // trayConfigOffset = 26 if pnlTrayConfig is visible, 0 if hidden
+        // showSkipNext = true if skip/next row buttons should be visible (tray file created)
+        private void RepositionControls(int trayConfigOffset, bool showSkipNext)
+        {
+            int baseFileName = 73 + trayConfigOffset;
+            int baseStep2 = 100 + trayConfigOffset;
+            int baseTrigger = 140 + trayConfigOffset;
+
+            // File Name row
+            lblFileName.Location = new System.Drawing.Point(9, baseFileName);
+            txtFileName.Location = new System.Drawing.Point(72, baseFileName - 3);
+            btnCreateFile.Location = new System.Drawing.Point(198, baseFileName - 5);
+
+            // Step 2
+            lblStep2.Location = new System.Drawing.Point(9, baseStep2);
+            NICcomboBox.Location = new System.Drawing.Point(11, baseStep2 + 19);
+            SchBtn.Location = new System.Drawing.Point(147, baseStep2 + 17);
+            lblNicHint.Location = new System.Drawing.Point(9, baseStep2 + 19);
+            comboBox1.Location = new System.Drawing.Point(11, baseStep2 + 45);
+            SctBtn.Location = new System.Drawing.Point(147, baseStep2 + 43);
+            lblReaderHint.Location = new System.Drawing.Point(205, baseStep2 + 48);
+            lblCurrentPos.Location = new System.Drawing.Point(233, baseStep2 + 19);
+
+            // Trigger button
+            TgrBtn.Location = new System.Drawing.Point(11, baseTrigger);
+
+            int liveviewY;
+            if (showSkipNext)
+            {
+                btnSkipCell.Location = new System.Drawing.Point(11, baseTrigger + 32);
+                btnNextRow.Location = new System.Drawing.Point(186, baseTrigger + 32);
+                liveviewY = baseTrigger + 64;
+            }
+            else
+            {
+                liveviewY = baseTrigger + 34;
+            }
+
+            liveviewForm1.Location = new System.Drawing.Point(11, liveviewY);
+            liveviewForm1.Size = new System.Drawing.Size(340, 180);
+
+            int step3Y = liveviewY + 188;
+            lblStep3.Location = new System.Drawing.Point(9, step3Y);
+            DataText.Location = new System.Drawing.Point(11, step3Y + 20);
+            lblFooter.Location = new System.Drawing.Point(9, step3Y + 47);
+
+            // Status panel and Help button
+            lblStatus.Location = new System.Drawing.Point(360, 30);
+            lblStatus.Size = new System.Drawing.Size(170, step3Y + 20 - 30);
+            btnHelp.Location = new System.Drawing.Point(360, step3Y + 20);
+
+            // Bring Step 3 controls to front
+            lblStep3.BringToFront();
+            DataText.BringToFront();
+            lblFooter.BringToFront();
+        }
+
         // Mode selection event handlers
         private void rbLooseUnit_CheckedChanged(object sender, EventArgs e)
         {
@@ -554,27 +601,15 @@ namespace FirstStepApp
                 lblCurrentPos.Visible = false;
                 pnlTrayGrid.Visible = false;
                 
-                // Reset button and liveview positions for Loose Unit mode
                 TgrBtn.Visible = true;
                 TgrBtn.Size = new System.Drawing.Size(340, 26);
-                TgrBtn.Location = new System.Drawing.Point(11, 116);
-                liveviewForm1.Location = new System.Drawing.Point(11, 150);
-                liveviewForm1.Size = new System.Drawing.Size(340, 180);
                 
-                // Reset Step 3 and DataText positions for Loose Unit mode
-                lblStep3.Location = new System.Drawing.Point(9, 338);
-                DataText.Location = new System.Drawing.Point(11, 358);
-                lblFooter.Location = new System.Drawing.Point(9, 385);
-                
-                // Bring Step 3 controls to front
-                lblStep3.BringToFront();
-                DataText.BringToFront();
-                lblFooter.BringToFront();
+                RepositionControls(0, false);
                 
                 // Reset form size (narrower, no tray grid)
-                this.ClientSize = new System.Drawing.Size(545, 440);
+                this.ClientSize = new System.Drawing.Size(545, 464);
                 
-                lblStatus.Text = "Status: Loose Unit Mode\n\nWorkflow:\n1. Create Excel file\n2. Scanner auto-connects\n3. Scan and save";
+                lblStatus.Text = "Status: Loose Unit Mode\n\nWorkflow:\n1. Select recipient email\n2. Create Excel file\n3. Scanner auto-connects\n4. Scan and save\n5. Click Send to email file";
             }
         }
 
@@ -591,27 +626,15 @@ namespace FirstStepApp
                 lblCurrentPos.Visible = false;
                 pnlTrayGrid.Visible = false;
                 
-                // Keep same button/liveview layout as Loose Unit until file is created
                 TgrBtn.Visible = true;
                 TgrBtn.Size = new System.Drawing.Size(340, 26);
-                TgrBtn.Location = new System.Drawing.Point(11, 116);
-                liveviewForm1.Location = new System.Drawing.Point(11, 150);
-                liveviewForm1.Size = new System.Drawing.Size(340, 180);
                 
-                // Keep Step 3 and DataText positions same as Loose Unit until file is created
-                lblStep3.Location = new System.Drawing.Point(9, 338);
-                DataText.Location = new System.Drawing.Point(11, 358);
-                lblFooter.Location = new System.Drawing.Point(9, 385);
+                RepositionControls(32, false);
                 
-                // Bring Step 3 controls to front
-                lblStep3.BringToFront();
-                DataText.BringToFront();
-                lblFooter.BringToFront();
+                // Expand form to show tray grid (wider)
+                this.ClientSize = new System.Drawing.Size(880, 464);
                 
-                // Expand form to show tray grid (wider, same height as Loose Unit)
-                this.ClientSize = new System.Drawing.Size(880, 440);
-                
-                lblStatus.Text = "Status: Tray Mode\n\nWorkflow:\n1. Set tray dimensions\n2. Create Excel file\n3. Scanner auto-connects\n4. Scan row by row";
+                lblStatus.Text = "Status: Tray Mode\n\nWorkflow:\n1. Select recipient email\n2. Set tray dimensions\n3. Create Excel file\n4. Scanner auto-connects\n5. Scan row by row\n6. Click Send to email file";
             }
         }
 
@@ -667,36 +690,19 @@ namespace FirstStepApp
                 m_scannedData.Clear();
                 m_duplicateCount = 0;
                 
-                // Show tray controls - Trigger button full width below Scanner not found label
+                // Show tray controls
                 TgrBtn.Visible = true;
                 TgrBtn.Size = new System.Drawing.Size(340, 26);
-                TgrBtn.Location = new System.Drawing.Point(11, 116);
-                
-                // Skip Cell and Next Row buttons below Trigger button
                 btnSkipCell.Visible = true;
                 btnNextRow.Visible = true;
                 lblCurrentPos.Visible = true;
                 btnSkipCell.Enabled = true;
                 btnNextRow.Enabled = true;
-                btnSkipCell.Location = new System.Drawing.Point(11, 148);
-                btnNextRow.Location = new System.Drawing.Point(186, 148);
                 
-                // Adjust liveview position for Tray mode (below the extra row of buttons)
-                liveviewForm1.Location = new System.Drawing.Point(11, 180);
-                liveviewForm1.Size = new System.Drawing.Size(340, 180);
+                RepositionControls(32, true);
                 
-                // Adjust Step 3 and DataText positions for Tray mode (liveview moves down 30px)
-                lblStep3.Location = new System.Drawing.Point(9, 368);
-                DataText.Location = new System.Drawing.Point(11, 388);
-                lblFooter.Location = new System.Drawing.Point(9, 415);
-                
-                // Bring Step 3 controls to front
-                lblStep3.BringToFront();
-                DataText.BringToFront();
-                lblFooter.BringToFront();
-                
-                // Expand form height for tray mode with extra buttons
-                this.ClientSize = new System.Drawing.Size(880, 440);
+                // Expand form for tray mode with extra buttons
+                this.ClientSize = new System.Drawing.Size(880, 494);
                 
                 // Show tray grid panel
                 pnlTrayGrid.Visible = true;
@@ -977,10 +983,110 @@ namespace FirstStepApp
             }
         }
 
-        // Send Email button handler
+        // Load email recipients from text file into the CheckedListBox
+        private void LoadEmailRecipients()
+        {
+            clbEmailRecipients.Items.Clear();
+            
+            string exeDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            string emailFile = Path.Combine(exeDir, "email_recipients.txt");
+            
+            if (File.Exists(emailFile))
+            {
+                string[] lines = File.ReadAllLines(emailFile);
+                foreach (string line in lines)
+                {
+                    string trimmed = line.Trim();
+                    if (!string.IsNullOrEmpty(trimmed))
+                    {
+                        clbEmailRecipients.Items.Add(trimmed);
+                    }
+                }
+            }
+            else
+            {
+                clbEmailRecipients.Items.Add("None");
+            }
+        }
+
+        // Toggle the email dropdown popup
+        private void btnEmailDropdown_Click(object sender, EventArgs e)
+        {
+            clbEmailRecipients.Visible = !clbEmailRecipients.Visible;
+            if (clbEmailRecipients.Visible)
+            {
+                clbEmailRecipients.BringToFront();
+            }
+        }
+
+        // Update the display textbox when items are checked/unchecked
+        private void clbEmailRecipients_ItemCheck(object sender, ItemCheckEventArgs e)
+        {
+            // Use BeginInvoke because the CheckedItems collection hasn't been updated yet at this point
+            this.BeginInvoke(new Action(() =>
+            {
+                UpdateEmailDisplay();
+            }));
+        }
+
+        // Refresh the email display textbox to show selected recipients
+        private void UpdateEmailDisplay()
+        {
+            var selected = GetSelectedEmailRecipients();
+            if (selected.Count == 0)
+            {
+                // Check if "None" is checked
+                bool noneChecked = false;
+                foreach (var item in clbEmailRecipients.CheckedItems)
+                {
+                    if (item.ToString().Trim().Equals("None", StringComparison.OrdinalIgnoreCase))
+                    {
+                        noneChecked = true;
+                        break;
+                    }
+                }
+                txtEmailDisplay.Text = noneChecked ? "None" : "(click \u25BC to select)";
+            }
+            else if (selected.Count == 1)
+            {
+                txtEmailDisplay.Text = selected[0];
+            }
+            else
+            {
+                txtEmailDisplay.Text = $"{selected.Count} recipients selected";
+            }
+        }
+
+        // Get a short summary of selected email recipients for status display
+        private string GetSelectedEmailSummary()
+        {
+            var selected = GetSelectedEmailRecipients();
+            if (selected.Count == 0)
+                return "None";
+            return string.Join(", ", selected);
+        }
+
+        // Get list of selected email addresses (excluding "None")
+        private List<string> GetSelectedEmailRecipients()
+        {
+            var recipients = new List<string>();
+            foreach (var item in clbEmailRecipients.CheckedItems)
+            {
+                string email = item.ToString().Trim();
+                if (!string.IsNullOrEmpty(email) && !email.Equals("None", StringComparison.OrdinalIgnoreCase))
+                {
+                    recipients.Add(email);
+                }
+            }
+            return recipients;
+        }
+
+        // Send Email button handler (beside the email dropdown)
         private void btnSendEmail_Click(object sender, EventArgs e)
         {
-            // Check if an Excel file exists to send
+            // Hide dropdown if open
+            clbEmailRecipients.Visible = false;
+
             if (string.IsNullOrEmpty(m_excelFilePath) || !File.Exists(m_excelFilePath))
             {
                 MessageBox.Show("No Excel file to send.\nPlease create and scan data first.", 
@@ -988,12 +1094,33 @@ namespace FirstStepApp
                 return;
             }
 
-            // Prompt user for recipient email address
-            string recipient = ShowEmailInputDialog();
-            if (string.IsNullOrWhiteSpace(recipient))
-                return; // User cancelled
+            if (m_scannedData.Count == 0)
+            {
+                MessageBox.Show("No 2DID has been scanned yet.\nPlease scan at least one item before sending the email.", 
+                    "No Scans", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
 
-            // Send the email with the Excel file attached
+            var recipients = GetSelectedEmailRecipients();
+            if (recipients.Count == 0)
+            {
+                MessageBox.Show("No email recipients selected.\nPlease click \u25BC and check at least one email address (not 'None').", 
+                    "No Recipients", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            string recipientDisplay = string.Join("\n", recipients);
+            var confirm = MessageBox.Show(
+                $"Send Excel file to:\n{recipientDisplay}\n\nFile: {Path.GetFileName(m_excelFilePath)}\nScans: {m_scannedData.Count}",
+                "Confirm Send Email", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            
+            if (confirm != DialogResult.Yes) return;
+
+            btnSendEmail.Enabled = false;
+            btnSendEmail.Text = "...";
+            btnSendEmail.Refresh();
+
+            string recipientList = string.Join(",", recipients);
             string fileName = Path.GetFileName(m_excelFilePath);
             string subject = $"2DID Scan Data - {fileName}";
             string body = $"<p>Please find attached the 2DID scan data file: <b>{fileName}</b></p>"
@@ -1002,87 +1129,26 @@ namespace FirstStepApp
 
             try
             {
-                btnSendEmail.Enabled = false;
-                btnSendEmail.Text = "Sending...";
-                btnSendEmail.Refresh();
-
                 using (Attachment attachment = new Attachment(m_excelFilePath))
                 {
-                    SendEmailWithAttachment(subject, recipient, body, attachment);
+                    SendEmailWithAttachment(subject, recipientList, body, attachment);
                 }
 
-                lblStatus.Text = $"Status: Email sent!\n{fileName}\n\nSent to:\n{recipient}";
-                MessageBox.Show($"Email sent successfully to:\n{recipient}", 
+                lblStatus.Text += $"\n\nEmail sent to:\n{recipientList}";
+                MessageBox.Show($"Email sent successfully to:\n{recipientDisplay}", 
                     "Email Sent", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
-                lblStatus.Text = $"Status: Email failed!\n{ex.Message}";
+                lblStatus.Text += $"\n\nEmail FAILED:\n{ex.Message}";
                 MessageBox.Show($"Failed to send email:\n{ex.Message}", 
                     "Email Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             finally
             {
                 btnSendEmail.Enabled = true;
-                btnSendEmail.Text = "Send Email";
+                btnSendEmail.Text = "Send";
             }
-        }
-
-        // Show a simple input dialog for email address
-        private string ShowEmailInputDialog()
-        {
-            Form inputForm = new Form();
-            inputForm.Text = "Send Excel File via Email";
-            inputForm.Size = new System.Drawing.Size(400, 180);
-            inputForm.StartPosition = FormStartPosition.CenterParent;
-            inputForm.FormBorderStyle = FormBorderStyle.FixedDialog;
-            inputForm.MaximizeBox = false;
-            inputForm.MinimizeBox = false;
-
-            Label lblPrompt = new Label();
-            lblPrompt.Text = "Enter recipient email address(es):\n(Separate multiple emails with commas)";
-            lblPrompt.Location = new System.Drawing.Point(15, 15);
-            lblPrompt.Size = new System.Drawing.Size(360, 35);
-
-            TextBox txtEmail = new TextBox();
-            txtEmail.Location = new System.Drawing.Point(15, 55);
-            txtEmail.Size = new System.Drawing.Size(355, 20);
-            txtEmail.Text = "";
-
-            Label lblFile = new Label();
-            lblFile.Text = $"File: {Path.GetFileName(m_excelFilePath)}  ({m_scannedData.Count} scans)";
-            lblFile.Location = new System.Drawing.Point(15, 82);
-            lblFile.Size = new System.Drawing.Size(355, 15);
-            lblFile.ForeColor = Color.Gray;
-
-            Button btnOK = new Button();
-            btnOK.Text = "Send";
-            btnOK.Location = new System.Drawing.Point(210, 105);
-            btnOK.Size = new System.Drawing.Size(75, 26);
-            btnOK.DialogResult = DialogResult.OK;
-
-            Button btnCancel = new Button();
-            btnCancel.Text = "Cancel";
-            btnCancel.Location = new System.Drawing.Point(295, 105);
-            btnCancel.Size = new System.Drawing.Size(75, 26);
-            btnCancel.DialogResult = DialogResult.Cancel;
-
-            inputForm.Controls.AddRange(new Control[] { lblPrompt, txtEmail, lblFile, btnOK, btnCancel });
-            inputForm.AcceptButton = btnOK;
-            inputForm.CancelButton = btnCancel;
-
-            if (inputForm.ShowDialog(this) == DialogResult.OK)
-            {
-                string email = txtEmail.Text.Trim();
-                if (string.IsNullOrWhiteSpace(email))
-                {
-                    MessageBox.Show("Please enter an email address.", "Error", 
-                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    return null;
-                }
-                return email;
-            }
-            return null;
         }
 
         // Send email with attachment via Broadcom SMTP relay

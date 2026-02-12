@@ -41,6 +41,10 @@ namespace FirstStepApp
             this.lblStatus = new System.Windows.Forms.Label();
             this.btnHelp = new System.Windows.Forms.Button();
             this.btnSendEmail = new System.Windows.Forms.Button();
+            this.lblEmailTo = new System.Windows.Forms.Label();
+            this.txtEmailDisplay = new System.Windows.Forms.TextBox();
+            this.btnEmailDropdown = new System.Windows.Forms.Button();
+            this.clbEmailRecipients = new System.Windows.Forms.CheckedListBox();
             this.lblStep1 = new System.Windows.Forms.Label();
             this.lblStep2 = new System.Windows.Forms.Label();
             this.lblStep3 = new System.Windows.Forms.Label();
@@ -99,9 +103,9 @@ namespace FirstStepApp
             // 
             // pnlTrayConfig
             // 
-            this.pnlTrayConfig.Location = new System.Drawing.Point(230, 3);
+            this.pnlTrayConfig.Location = new System.Drawing.Point(9, 70);
             this.pnlTrayConfig.Name = "pnlTrayConfig";
-            this.pnlTrayConfig.Size = new System.Drawing.Size(180, 24);
+            this.pnlTrayConfig.Size = new System.Drawing.Size(300, 24);
             this.pnlTrayConfig.TabIndex = 24;
             this.pnlTrayConfig.Visible = false;
             // 
@@ -157,11 +161,61 @@ namespace FirstStepApp
             this.numTrayCols.Value = new decimal(new int[] { 30, 0, 0, 0 });
             this.pnlTrayConfig.Controls.Add(this.numTrayCols);
             // 
+            // lblEmailTo
+            // 
+            this.lblEmailTo.AutoSize = true;
+            this.lblEmailTo.Location = new System.Drawing.Point(9, 32);
+            this.lblEmailTo.Name = "lblEmailTo";
+            this.lblEmailTo.Size = new System.Drawing.Size(55, 12);
+            this.lblEmailTo.TabIndex = 36;
+            this.lblEmailTo.Text = "Email To:";
+            // 
+            // txtEmailDisplay
+            // 
+            this.txtEmailDisplay.Location = new System.Drawing.Point(72, 29);
+            this.txtEmailDisplay.Name = "txtEmailDisplay";
+            this.txtEmailDisplay.ReadOnly = true;
+            this.txtEmailDisplay.Size = new System.Drawing.Size(200, 19);
+            this.txtEmailDisplay.TabIndex = 37;
+            this.txtEmailDisplay.Text = "(click \u25BC to select)";
+            this.txtEmailDisplay.Click += new System.EventHandler(this.btnEmailDropdown_Click);
+            // 
+            // btnEmailDropdown
+            // 
+            this.btnEmailDropdown.Location = new System.Drawing.Point(272, 28);
+            this.btnEmailDropdown.Name = "btnEmailDropdown";
+            this.btnEmailDropdown.Size = new System.Drawing.Size(24, 21);
+            this.btnEmailDropdown.TabIndex = 38;
+            this.btnEmailDropdown.Text = "\u25BC";
+            this.btnEmailDropdown.UseVisualStyleBackColor = true;
+            this.btnEmailDropdown.Click += new System.EventHandler(this.btnEmailDropdown_Click);
+            // 
+            // clbEmailRecipients
+            // 
+            this.clbEmailRecipients.CheckOnClick = true;
+            this.clbEmailRecipients.FormattingEnabled = true;
+            this.clbEmailRecipients.Location = new System.Drawing.Point(72, 50);
+            this.clbEmailRecipients.Name = "clbEmailRecipients";
+            this.clbEmailRecipients.Size = new System.Drawing.Size(224, 100);
+            this.clbEmailRecipients.TabIndex = 39;
+            this.clbEmailRecipients.Visible = false;
+            this.clbEmailRecipients.ItemCheck += new System.Windows.Forms.ItemCheckEventHandler(this.clbEmailRecipients_ItemCheck);
+            // 
+            // btnSendEmail
+            // 
+            this.btnSendEmail.Location = new System.Drawing.Point(300, 28);
+            this.btnSendEmail.Name = "btnSendEmail";
+            this.btnSendEmail.Size = new System.Drawing.Size(50, 21);
+            this.btnSendEmail.TabIndex = 40;
+            this.btnSendEmail.Text = "Send";
+            this.btnSendEmail.UseVisualStyleBackColor = true;
+            this.btnSendEmail.Click += new System.EventHandler(this.btnSendEmail_Click);
+            // 
             // lblStep1
             // 
             this.lblStep1.AutoSize = true;
             this.lblStep1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold);
-            this.lblStep1.Location = new System.Drawing.Point(9, 30);
+            this.lblStep1.Location = new System.Drawing.Point(9, 54);
             this.lblStep1.Name = "lblStep1";
             this.lblStep1.Size = new System.Drawing.Size(130, 13);
             this.lblStep1.TabIndex = 16;
@@ -170,7 +224,7 @@ namespace FirstStepApp
             // lblFileName
             // 
             this.lblFileName.AutoSize = true;
-            this.lblFileName.Location = new System.Drawing.Point(9, 49);
+            this.lblFileName.Location = new System.Drawing.Point(9, 73);
             this.lblFileName.Name = "lblFileName";
             this.lblFileName.Size = new System.Drawing.Size(57, 12);
             this.lblFileName.TabIndex = 10;
@@ -178,7 +232,7 @@ namespace FirstStepApp
             // 
             // txtFileName
             // 
-            this.txtFileName.Location = new System.Drawing.Point(72, 46);
+            this.txtFileName.Location = new System.Drawing.Point(72, 70);
             this.txtFileName.Name = "txtFileName";
             this.txtFileName.Size = new System.Drawing.Size(120, 19);
             this.txtFileName.TabIndex = 1;
@@ -186,7 +240,7 @@ namespace FirstStepApp
             // 
             // btnCreateFile
             // 
-            this.btnCreateFile.Location = new System.Drawing.Point(198, 44);
+            this.btnCreateFile.Location = new System.Drawing.Point(198, 68);
             this.btnCreateFile.Name = "btnCreateFile";
             this.btnCreateFile.Size = new System.Drawing.Size(120, 23);
             this.btnCreateFile.TabIndex = 2;
@@ -198,7 +252,7 @@ namespace FirstStepApp
             // 
             this.lblStep2.AutoSize = true;
             this.lblStep2.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold);
-            this.lblStep2.Location = new System.Drawing.Point(9, 76);
+            this.lblStep2.Location = new System.Drawing.Point(9, 100);
             this.lblStep2.Name = "lblStep2";
             this.lblStep2.Size = new System.Drawing.Size(144, 13);
             this.lblStep2.TabIndex = 17;
@@ -208,7 +262,7 @@ namespace FirstStepApp
             // 
             this.NICcomboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.NICcomboBox.FormattingEnabled = true;
-            this.NICcomboBox.Location = new System.Drawing.Point(11, 95);
+            this.NICcomboBox.Location = new System.Drawing.Point(11, 119);
             this.NICcomboBox.Name = "NICcomboBox";
             this.NICcomboBox.Size = new System.Drawing.Size(130, 20);
             this.NICcomboBox.TabIndex = 3;
@@ -216,7 +270,7 @@ namespace FirstStepApp
             // 
             // SchBtn
             // 
-            this.SchBtn.Location = new System.Drawing.Point(147, 93);
+            this.SchBtn.Location = new System.Drawing.Point(147, 117);
             this.SchBtn.Name = "SchBtn";
             this.SchBtn.Size = new System.Drawing.Size(55, 23);
             this.SchBtn.TabIndex = 4;
@@ -229,7 +283,7 @@ namespace FirstStepApp
             // 
             this.lblNicHint.AutoSize = true;
             this.lblNicHint.ForeColor = System.Drawing.Color.Green;
-            this.lblNicHint.Location = new System.Drawing.Point(9, 95);
+            this.lblNicHint.Location = new System.Drawing.Point(9, 119);
             this.lblNicHint.Name = "lblNicHint";
             this.lblNicHint.Size = new System.Drawing.Size(200, 12);
             this.lblNicHint.TabIndex = 19;
@@ -239,7 +293,7 @@ namespace FirstStepApp
             // 
             this.comboBox1.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.comboBox1.FormattingEnabled = true;
-            this.comboBox1.Location = new System.Drawing.Point(11, 121);
+            this.comboBox1.Location = new System.Drawing.Point(11, 145);
             this.comboBox1.Name = "comboBox1";
             this.comboBox1.Size = new System.Drawing.Size(130, 20);
             this.comboBox1.TabIndex = 5;
@@ -249,7 +303,7 @@ namespace FirstStepApp
             // 
             this.SctBtn.Appearance = System.Windows.Forms.Appearance.Button;
             this.SctBtn.Enabled = false;
-            this.SctBtn.Location = new System.Drawing.Point(147, 119);
+            this.SctBtn.Location = new System.Drawing.Point(147, 143);
             this.SctBtn.Name = "SctBtn";
             this.SctBtn.Size = new System.Drawing.Size(55, 23);
             this.SctBtn.TabIndex = 6;
@@ -263,7 +317,7 @@ namespace FirstStepApp
             // 
             this.lblReaderHint.AutoSize = true;
             this.lblReaderHint.ForeColor = System.Drawing.Color.Blue;
-            this.lblReaderHint.Location = new System.Drawing.Point(205, 124);
+            this.lblReaderHint.Location = new System.Drawing.Point(205, 148);
             this.lblReaderHint.Name = "lblReaderHint";
             this.lblReaderHint.Size = new System.Drawing.Size(120, 12);
             this.lblReaderHint.TabIndex = 20;
@@ -273,7 +327,7 @@ namespace FirstStepApp
             // TgrBtn
             // 
             this.TgrBtn.Enabled = false;
-            this.TgrBtn.Location = new System.Drawing.Point(11, 116);
+            this.TgrBtn.Location = new System.Drawing.Point(11, 140);
             this.TgrBtn.Name = "TgrBtn";
             this.TgrBtn.Size = new System.Drawing.Size(340, 26);
             this.TgrBtn.TabIndex = 7;
@@ -284,7 +338,7 @@ namespace FirstStepApp
             // btnSkipCell
             // 
             this.btnSkipCell.Enabled = false;
-            this.btnSkipCell.Location = new System.Drawing.Point(11, 148);
+            this.btnSkipCell.Location = new System.Drawing.Point(11, 172);
             this.btnSkipCell.Name = "btnSkipCell";
             this.btnSkipCell.Size = new System.Drawing.Size(165, 26);
             this.btnSkipCell.TabIndex = 30;
@@ -296,7 +350,7 @@ namespace FirstStepApp
             // btnNextRow
             // 
             this.btnNextRow.Enabled = false;
-            this.btnNextRow.Location = new System.Drawing.Point(186, 148);
+            this.btnNextRow.Location = new System.Drawing.Point(186, 172);
             this.btnNextRow.Name = "btnNextRow";
             this.btnNextRow.Size = new System.Drawing.Size(165, 26);
             this.btnNextRow.TabIndex = 31;
@@ -310,7 +364,7 @@ namespace FirstStepApp
             this.lblCurrentPos.AutoSize = true;
             this.lblCurrentPos.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold);
             this.lblCurrentPos.ForeColor = System.Drawing.Color.Blue;
-            this.lblCurrentPos.Location = new System.Drawing.Point(233, 95);
+            this.lblCurrentPos.Location = new System.Drawing.Point(233, 119);
             this.lblCurrentPos.Name = "lblCurrentPos";
             this.lblCurrentPos.Size = new System.Drawing.Size(100, 13);
             this.lblCurrentPos.TabIndex = 32;
@@ -324,7 +378,7 @@ namespace FirstStepApp
             this.liveviewForm1.ImageFormat = Keyence.AutoID.SDK.LiveviewForm.ImageFormatType.Jpeg;
             this.liveviewForm1.ImageQuality = 3;
             this.liveviewForm1.IpAddress = "192.168.100.100";
-            this.liveviewForm1.Location = new System.Drawing.Point(11, 150);
+            this.liveviewForm1.Location = new System.Drawing.Point(11, 174);
             this.liveviewForm1.Name = "liveviewForm1";
             this.liveviewForm1.PullTimeSpan = 1;
             this.liveviewForm1.Size = new System.Drawing.Size(340, 180);
@@ -335,7 +389,7 @@ namespace FirstStepApp
             // 
             this.lblStep3.AutoSize = true;
             this.lblStep3.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold);
-            this.lblStep3.Location = new System.Drawing.Point(9, 338);
+            this.lblStep3.Location = new System.Drawing.Point(9, 362);
             this.lblStep3.Name = "lblStep3";
             this.lblStep3.Size = new System.Drawing.Size(180, 13);
             this.lblStep3.TabIndex = 18;
@@ -344,7 +398,7 @@ namespace FirstStepApp
             // DataText
             // 
             this.DataText.BackColor = System.Drawing.SystemColors.Control;
-            this.DataText.Location = new System.Drawing.Point(11, 358);
+            this.DataText.Location = new System.Drawing.Point(11, 382);
             this.DataText.Name = "DataText";
             this.DataText.ReadOnly = true;
             this.DataText.ScrollBars = System.Windows.Forms.ScrollBars.Both;
@@ -367,29 +421,19 @@ namespace FirstStepApp
             this.lblStatus.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.lblStatus.Location = new System.Drawing.Point(360, 30);
             this.lblStatus.Name = "lblStatus";
-            this.lblStatus.Size = new System.Drawing.Size(170, 320);
+            this.lblStatus.Size = new System.Drawing.Size(170, 344);
             this.lblStatus.TabIndex = 14;
-            this.lblStatus.Text = "Status:\nAuto-connecting...\n\nWorkflow:\n1. Select mode\n2. Create Excel file\n3. Scanner auto-connects\n4. Scan and save";
+            this.lblStatus.Text = "Status:\nAuto-connecting...\n\nWorkflow:\n1. Select recipient email\n2. Select mode\n3. Create Excel file\n4. Scanner auto-connects\n5. Scan and save\n6. Click Send to email file";
             // 
             // btnHelp
             // 
-            this.btnHelp.Location = new System.Drawing.Point(360, 358);
+            this.btnHelp.Location = new System.Drawing.Point(360, 382);
             this.btnHelp.Name = "btnHelp";
-            this.btnHelp.Size = new System.Drawing.Size(80, 26);
+            this.btnHelp.Size = new System.Drawing.Size(170, 26);
             this.btnHelp.TabIndex = 10;
-            this.btnHelp.Text = "Help";
+            this.btnHelp.Text = "Help / User Guide";
             this.btnHelp.UseVisualStyleBackColor = true;
             this.btnHelp.Click += new System.EventHandler(this.btnHelp_Click);
-            // 
-            // btnSendEmail
-            // 
-            this.btnSendEmail.Location = new System.Drawing.Point(445, 358);
-            this.btnSendEmail.Name = "btnSendEmail";
-            this.btnSendEmail.Size = new System.Drawing.Size(85, 26);
-            this.btnSendEmail.TabIndex = 35;
-            this.btnSendEmail.Text = "Send Email";
-            this.btnSendEmail.UseVisualStyleBackColor = true;
-            this.btnSendEmail.Click += new System.EventHandler(this.btnSendEmail_Click);
             // 
             // lblFooter
             // 
@@ -397,7 +441,7 @@ namespace FirstStepApp
             this.lblFooter.AutoSize = true;
             this.lblFooter.ForeColor = System.Drawing.Color.Gray;
             this.lblFooter.Font = new System.Drawing.Font("Microsoft Sans Serif", 7F);
-            this.lblFooter.Location = new System.Drawing.Point(9, 385);
+            this.lblFooter.Location = new System.Drawing.Point(9, 409);
             this.lblFooter.Name = "lblFooter";
             this.lblFooter.Size = new System.Drawing.Size(300, 12);
             this.lblFooter.TabIndex = 34;
@@ -407,11 +451,16 @@ namespace FirstStepApp
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(545, 410);
+            this.ClientSize = new System.Drawing.Size(545, 464);
             this.Controls.Add(this.lblMode);
             this.Controls.Add(this.rbLooseUnit);
             this.Controls.Add(this.rbTray);
             this.Controls.Add(this.pnlTrayConfig);
+            this.Controls.Add(this.lblEmailTo);
+            this.Controls.Add(this.txtEmailDisplay);
+            this.Controls.Add(this.btnEmailDropdown);
+            this.Controls.Add(this.btnSendEmail);
+            this.Controls.Add(this.clbEmailRecipients);
             this.Controls.Add(this.lblStep1);
             this.Controls.Add(this.lblFileName);
             this.Controls.Add(this.txtFileName);
@@ -432,7 +481,6 @@ namespace FirstStepApp
             this.Controls.Add(this.DataText);
             this.Controls.Add(this.lblStatus);
             this.Controls.Add(this.btnHelp);
-            this.Controls.Add(this.btnSendEmail);
             this.Controls.Add(this.pnlTrayGrid);
             this.Controls.Add(this.lblFooter);
             this.Name = "Form1";
@@ -479,6 +527,10 @@ namespace FirstStepApp
         private System.Windows.Forms.Panel pnlTrayGrid;
         private System.Windows.Forms.Label lblFooter;
         private System.Windows.Forms.Button btnSendEmail;
+        private System.Windows.Forms.Label lblEmailTo;
+        private System.Windows.Forms.TextBox txtEmailDisplay;
+        private System.Windows.Forms.Button btnEmailDropdown;
+        private System.Windows.Forms.CheckedListBox clbEmailRecipients;
     }
 }
 

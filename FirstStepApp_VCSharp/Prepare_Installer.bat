@@ -69,6 +69,10 @@ if exist "%APP_DIR%\VncClientControlCommon.dll" echo   Copied: VncClientControlC
 copy "%SOURCE_DIR%\VncClientControlCommonLib.dll" "%APP_DIR%\" /Y 2>nul
 if exist "%APP_DIR%\VncClientControlCommonLib.dll" echo   Copied: VncClientControlCommonLib.dll
 
+REM Copy email recipients config file
+copy "%SOURCE_DIR%\email_recipients.txt" "%APP_DIR%\" /Y 2>nul
+if exist "%APP_DIR%\email_recipients.txt" echo   Copied: email_recipients.txt
+
 REM Copy icon file
 if exist "%~dp0FirstStepApp\scanner.ico" (
     echo Copying custom icon...

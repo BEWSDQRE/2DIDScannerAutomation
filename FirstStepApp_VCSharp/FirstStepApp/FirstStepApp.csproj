@@ -149,6 +149,9 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="scanner.ico" />
+    <Content Include="email_recipients.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <WCFMetadata Include="Service References\" />
